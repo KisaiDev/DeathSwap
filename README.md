@@ -64,7 +64,7 @@ lobby:
 
 ## ⚙️ Configuration des Kits
 
-### 📁 `config.yml`
+### 📁 `kits.yml`
 
 ```yml
 kits:
@@ -72,10 +72,20 @@ kits:
   Mineur:
     # Description du kit
     description:
-      - "Équipement de départ"
+      - "Équipement de mineur"
     # Items présents dans le kit
     items:
       - material: STONE_PICKAXE
         amount: 1
       - material: COOKED_CHICKEN
         amount: 16
+```
+
+---
+
+## ⚙️ Compilation / Build
+
+Si tu veux compiler le plugin toi-même avec **Gradle**, utilise la commande suivante dans le terminal à la racine du projet :
+
+```bash
+./gradlew build
