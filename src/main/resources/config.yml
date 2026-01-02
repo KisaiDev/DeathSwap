@@ -1,0 +1,10 @@
+prefix: "&6&lDeathSwap&7 »"
+#Timer entre swap
+timer: 45
+#Taille de la map
+border: 300
+#Coordonnée du spawn
+lobby:
+  x:
+  y:
+  z:

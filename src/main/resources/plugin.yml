@@ -1,0 +1,6 @@
+name: DeathSwap
+version: '${version}'
+main: fr.kisai.deathswap.Main
+commands:
+  deathswap:
+    aliases: [ds]

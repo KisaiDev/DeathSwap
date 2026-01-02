@@ -1,0 +1,9 @@
+kits:
+  Mineur:
+    description:
+      - "Équipement de départ"
+    items:
+      - material: STONE_PICKAXE
+        amount: 1
+      - material: COOKED_CHICKEN
+        amount: 16
