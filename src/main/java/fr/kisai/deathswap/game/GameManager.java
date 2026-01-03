@@ -1,18 +1,24 @@
 package fr.kisai.deathswap.game;
 
+import fr.kisai.deathswap.Main;
+import fr.kisai.deathswap.game.kits.Kit;
 import fr.kisai.deathswap.game.player.GPlayer;
 import fr.kisai.deathswap.game.task.GameTask;
 import fr.kisai.deathswap.game.world.GameWorldsCreator;
 import fr.kisai.deathswap.utils.ChatUtil;
 import fr.kisai.deathswap.utils.EffectUtils;
-import fr.kisai.deathswap.utils.Title;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Random;
 
 public class GameManager {
@@ -55,10 +61,9 @@ public class GameManager {
 
         GPlayer.get(p1).setInGame(true);
         GPlayer.get(p2).setInGame(true);
-        p1.getInventory().addItem(GPlayer.get(p1).getKits().getItems());
-        p2.getInventory().addItem(GPlayer.get(p2).getKits().getItems());
-        System.out.println("Player One Kits: " + GPlayer.get(p1).getKits().getName());
-        System.out.println("Player Two Kits: " + GPlayer.get(p2).getKits().getName());
+
+        giveKitOrRandom(p1);
+        giveKitOrRandom(p2);
 
         EffectUtils.addTemporaryNoFall(p1, 5);
         EffectUtils.addTemporaryNoFall(p2, 5);
@@ -70,8 +75,66 @@ public class GameManager {
         Bukkit.broadcastMessage(ChatUtil.prefix("&aLa partie commence !"));
     }
 
+    public void startThree(Player p1, Player p2,Player p3) {
+        if (game) return;
+
+        GameWorldsCreator creator = new GameWorldsCreator();
+        creator.create();
+        this.gameWorld = Bukkit.getWorld("game");
+
+        p1.teleport(getSafeRandomLoc());
+        p2.teleport(getSafeRandomLoc());
+        p3.teleport(getSafeRandomLoc());
+
+        GPlayer.get(p1).setInGame(true);
+        GPlayer.get(p2).setInGame(true);
+        GPlayer.get(p3).setInGame(true);
+
+        giveKitOrRandom(p1);
+        giveKitOrRandom(p2);
+        giveKitOrRandom(p3);
+
+
+        EffectUtils.addTemporaryNoFall(p1, 5);
+        EffectUtils.addTemporaryNoFall(p2, 5);
+        EffectUtils.addTemporaryNoFall(p3, 5);
+
+        game = true;
+
+        gameTask = new GameTask();
+
+        Bukkit.broadcastMessage(ChatUtil.prefix("&aLa partie commence !"));
+    }
+
+    public void giveKitOrRandom(Player player) {
+        GPlayer gPlayer = GPlayer.get(player);
+
+        Collection<Kit> allKits = Main.getInstance().getKitsManager().getKits();
+
+        if (gPlayer.getKits() == null) {
+            List<Kit> kitList = new ArrayList<>(allKits);
+
+            Kit randomKit = kitList.get(new Random().nextInt(kitList.size()));
+            gPlayer.setKits(randomKit);
+
+            player.sendMessage(ChatUtil.prefix("&eVous n'aviez pas choisi de kit, vous recevez le kit : &f" + randomKit.getName()));
+        }
+
+        Kit kit = gPlayer.getKits();
+        for (ItemStack item : kit.getItems()) {
+            player.getInventory().addItem(item);
+        }
+    }
 
     public void safeStopGame() {
+        stopGame();
+
+        Bukkit.broadcastMessage(" ");
+        Bukkit.broadcastMessage(ChatUtil.prefix("&c&lLa partie a été arrêtée."));
+        Bukkit.broadcastMessage(" ");
+        deleteGameWorld();
+    }
+    public void stopGame(){
         if (!game) return;
 
         game = false;
@@ -83,45 +146,49 @@ public class GameManager {
 
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (GPlayer.get(p).isInGame()) {
-
                 GPlayer.get(p).setInGame(false);
-
                 p.teleport(getLobbyLocation());
                 p.getInventory().clear();
                 p.setHealth(p.getMaxHealth());
                 p.setFoodLevel(20);
                 p.setExp(0);
                 p.setLevel(0);
+                p.setGameMode(GameMode.SURVIVAL);
             }
         }
-
-        Bukkit.broadcastMessage(" ");
-        Bukkit.broadcastMessage(ChatUtil.prefix("&c&lLa partie a été arrêtée."));
-        Bukkit.broadcastMessage(" ");
-        deleteGameWorld();
     }
-
 
     public void finishGame(Player victim) {
         if (!game) return;
 
-        Player winner = null;
+        GPlayer.get(victim).setInGame(false);
+
+        List<Player> alivePlayers = new ArrayList<>();
+
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (GPlayer.get(p).isInGame() && !p.equals(victim)) {
-                winner = p;
-                break;
+            if (GPlayer.get(p).isInGame()) {
+                alivePlayers.add(p);
             }
         }
 
-        if (winner != null) {
+        if (alivePlayers.size() > 1) {
+            Bukkit.broadcastMessage(ChatUtil.prefix("&c" + victim.getName() + " est éliminé !"));
+            return;
+        }
+
+
+        if (alivePlayers.size() == 1) {
+            Player winner = alivePlayers.get(0);
+
             Bukkit.broadcastMessage(" ");
             Bukkit.broadcastMessage(ChatUtil.prefix("&6&lVictoire de &e" + winner.getName()));
             Bukkit.broadcastMessage(" ");
         }
 
-        safeStopGame();
+        stopGame();
         deleteGameWorld();
     }
+
 
     public Location getSafeRandomLoc() {
 

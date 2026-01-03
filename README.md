@@ -68,7 +68,7 @@ lobby:
 
 ```yml
 kits:
-  # Nom du kit
+  # Nom du kit 
   Mineur:
     # Description du kit
     description:
@@ -85,7 +85,7 @@ kits:
 
 ## ⚙️ Compilation / Build
 
-Si tu veux compiler le plugin toi-même avec **Gradle**, utilise la commande suivante dans le terminal à la racine du projet :
+Si vous souhaitez compiler le plugin vous-même avec **Gradle**, utilisez la commande suivante dans le terminal à la racine du projet :
 
 ```bash
 ./gradlew build

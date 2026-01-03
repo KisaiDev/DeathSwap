@@ -12,9 +12,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-public class DeathSwapCommands implements CommandExecutor {
+import java.util.Collections;
+import java.util.List;
+
+public class DeathSwapCommands implements CommandExecutor , TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (sender instanceof Player) {
@@ -24,28 +28,41 @@ public class DeathSwapCommands implements CommandExecutor {
                     player.sendMessage(ChatUtil.prefix("&c&lMerci de faire /deathswap <start/kits/stop>"));
                 } else {
                     switch (args[0]) {
-                        case "start":
+                        case "start": {
 
                             if (args.length < 3) {
-                                player.sendMessage(ChatUtil.prefix("&cMerci de faire : /deathswap start <player1> <player2>"));
+                                player.sendMessage(ChatUtil.prefix("&cMerci de faire : /deathswap start <player1> <player2> [player3]"));
                                 return true;
                             }
 
                             Player player1 = Bukkit.getPlayer(args[1]);
                             Player player2 = Bukkit.getPlayer(args[2]);
+                            Player player3 = null;
 
-                            if (player1 == null || player2 == null) {
+                            if (args.length >= 4) {
+                                player3 = Bukkit.getPlayer(args[3]);
+                            }
+
+                            if (player1 == null || player2 == null || (args.length >= 4 && player3 == null)) {
                                 player.sendMessage(ChatUtil.prefix("&cUn des joueurs n'est pas en ligne."));
                                 return true;
                             }
 
-                            if (player1.equals(player2)) {
-                                player.sendMessage(ChatUtil.prefix("&cVous devez choisir deux joueurs différents."));
+                            if (player1.equals(player2) || (player3 != null && (player1.equals(player3) || player2.equals(player3)))) {
+                                player.sendMessage(ChatUtil.prefix("&cVous devez choisir des joueurs différents."));
                                 return true;
                             }
 
-                            Main.getGameManager().startTwo(player1, player2);
+                            if (player3 != null) {
+                                Main.getGameManager().startThree(player1, player2, player3);
+                            } else {
+                                Main.getGameManager().startTwo(player1, player2);
+                            }
+
                             break;
+                        }
+
+
                         case "kits":
                             KitsManager kitsManager = Main.getInstance().getKitsManager();
                             if (args.length < 2) {
@@ -79,32 +96,6 @@ public class DeathSwapCommands implements CommandExecutor {
                             player.sendMessage(ChatUtil.prefix("&aVous avez bien choisi le kit : &f" + kit.getName()));
                             return true;
 
-                       /* case "kits":
-                            if (args.length < 2) {
-                                player.sendMessage(ChatUtil.prefix("&c&lVoici les kits disponibles :"));
-                                player.sendMessage(" ");
-
-                                for (KitsRegisters kit : KitsRegisters.values()) {
-                                    BaseComponent[] kits = new ComponentBuilder("§7- §f"+ kit.getName()).event(new HoverEvent(
-                                            HoverEvent.Action.SHOW_TEXT,
-                                            new ComponentBuilder("§f" + Arrays.toString(kit.getKitsCreator().getDescription())).create()
-                                    )).create();
-                                    player.spigot().sendMessage(kits);
-                                    //player.sendMessage("§7- §f" + kit.getName());
-                                }
-                                return true;
-                            }
-
-                            KitsRegisters kit = KitsRegisters.getByName(args[1]);
-
-                            if (kit == null) {
-                                player.sendMessage(ChatUtil.prefix("&cCe kit n'existe pas."));
-                                return true;
-                            }
-
-                            GPlayer.get(player).setKits(kit);
-                            player.sendMessage(ChatUtil.prefix("&aVous avez bien choisi le kit : &f" + kit.getName()));
-                            break;*/
                         case "stop":
                             Main.getGameManager().safeStopGame();
                             break;
@@ -115,4 +106,62 @@ public class DeathSwapCommands implements CommandExecutor {
         }
         return false;
     }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
+
+        if (!cmd.getName().equalsIgnoreCase("deathswap")) {
+            return Collections.emptyList();
+        }
+
+        if (args.length == 1) {
+            List<String> subCommands = new java.util.ArrayList<>();
+            subCommands.add("start");
+            subCommands.add("kits");
+            subCommands.add("stop");
+
+            return filter(args[0], subCommands);
+        }
+
+
+        if (args[0].equalsIgnoreCase("start")) {
+
+            // /deathswap start <player>
+            if (args.length >= 2 && args.length <= 4) {
+                return Bukkit.getOnlinePlayers().stream()
+                        .map(Player::getName)
+                        .filter(name -> !alreadyUsed(name, args))
+                        .filter(name -> name.toLowerCase().startsWith(args[args.length - 1].toLowerCase()))
+                        .collect(java.util.stream.Collectors.toList());
+            }
+        }
+
+
+        if (args[0].equalsIgnoreCase("kits") && args.length == 2) {
+            return Main.getInstance().getKitsManager().getKits().stream()
+                    .map(Kit::getName)
+                    .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        return Collections.emptyList();
+    }
+
+
+    private List<String> filter(String arg, List<String> values) {
+        return values.stream()
+                .filter(v -> v.toLowerCase().startsWith(arg.toLowerCase()))
+                .collect(java.util.stream.Collectors.toList());
+
+    }
+
+    private boolean alreadyUsed(String name, String[] args) {
+        for (String arg : args) {
+            if (arg.equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

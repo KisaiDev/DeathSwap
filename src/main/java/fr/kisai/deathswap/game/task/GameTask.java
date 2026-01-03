@@ -32,7 +32,8 @@ public class GameTask extends BukkitRunnable {
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (GPlayer.get(p).isInGame()) {
                 ingame.add(p);
-                Title.sendActionBar(p, "§eTemps avant swap : §c" + timer + "s");
+                String msg = Main.getInstance().getConfig().getString("timer-message").replace("<time>",String.valueOf(timer));
+                Title.sendActionBar(p, "&eTemps avant swap : &c" + timer + "s");
             }
         }
 
@@ -50,7 +51,13 @@ public class GameTask extends BukkitRunnable {
             locations.add(p.getLocation());
         }
 
-        int shift = new Random().nextInt(players.size() - 1) + 1;
+        int shift;
+        if (players.size() == 2) {
+            shift = 1;
+        } else {
+            shift = new Random().nextInt(players.size() - 1) + 1;
+        }
+
         Collections.rotate(locations, shift);
 
         for (int i = 0; i < players.size(); i++) {
@@ -61,5 +68,4 @@ public class GameTask extends BukkitRunnable {
             p.playSound(p.getLocation(), Sound.LEVEL_UP, 1, 1);
         }
     }
-
 }

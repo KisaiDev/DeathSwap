@@ -1,6 +1,8 @@
 prefix: "&6&lDeathSwap&7 »"
 #Timer entre swap
 timer: 45
+#Message dans l'action bar
+timer-message: "&eTemps avant swap : &c <time> s"
 #Taille de la map
 border: 300
 #Coordonnée du spawn
