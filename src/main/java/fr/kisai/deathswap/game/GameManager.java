@@ -49,7 +49,6 @@ public class GameManager {
 
 
     public void startTwo(Player p1, Player p2) {
-
         if (game) return;
 
         GameWorldsCreator creator = new GameWorldsCreator();
